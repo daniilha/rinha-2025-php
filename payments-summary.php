@@ -21,5 +21,10 @@ $final=[];
 foreach ($data as $row) {
 	$final[$row['processor']]=['totalAmount'=>$row['amount'],'totalRequests'=>$row['total']];
 }
-
+if (empty($final['default'])) {
+	$final['default']=['totalAmount'=>0.0,'totalRequests'=>0];
+}
+if (empty($final['fallback'])) {
+	$final['fallback']=['totalAmount'=>0.0,'totalRequests'=>0];
+}
 echo json_encode($final);

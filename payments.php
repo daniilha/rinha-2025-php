@@ -6,7 +6,7 @@ $d = $now->format('m-d-Y H:i:s.u');
 
 $asd = file_get_contents('php://input');
 $payment  = json_decode($asd, true);
-
+$processor = 'default';
 $ch = curl_init('http://payment-processor-default:8080/payments');
 $payload = (file_get_contents('php://input'));
 $payload = json_decode($payload, true);
@@ -19,6 +19,7 @@ $result = curl_exec($ch);
 curl_close($ch);
 
 if ($result==false) {
+	$processor = 'fallback';
 	$ch = curl_init('http://payment-processor-fallback:8080/payments');
 	$payload = (file_get_contents('php://input'));
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
@@ -27,6 +28,7 @@ if ($result==false) {
 	$result = curl_exec($ch);
 	curl_close($ch);
 }
+
 if ($result!==false) {
 	$msg=json_decode($result, true)['message'];
 
@@ -35,6 +37,6 @@ if ($result!==false) {
 
 	$query= "insert INTO payments 
 (correlationId,amount,requested_at,processor) 
-VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','default')";
+VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','".$processor."')";
 	$result = pg_query($dbconn, $query);
 }
