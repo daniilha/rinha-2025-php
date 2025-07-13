@@ -1,6 +1,6 @@
 <?php
 $asd = file_get_contents('php://input');
-$da  = json_decode($asd, true);
+$payment  = json_decode($asd, true);
 // echo($da['amount']);
 // echo($da['correlationId']);
 
@@ -20,7 +20,24 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 // var_dump($ch);
 
 // Send request.
-$result = curl_exec($ch);
-curl_close($ch);
+// $result = curl_exec($ch);
+// curl_close($ch);
 // Print response.
-echo "<pre>$result</pre>";
+// echo "<pre>$result</pre>";
+
+
+$d = date('Y-m-d H:i:s.u', time());
+
+
+$dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
+// var_dump($dbconn);
+$result = pg_query($dbconn, 'select * from payments');
+var_dump($result);
+
+$query= "insert INTO payments 
+(correlationId,amount,requested_at,processor) 
+VALUES ('".$payment['correlationId']."',".$payment['amount'].",'".$d."','default')";
+echo $query;
+$result = pg_query($dbconn, $query);
+
+var_dump($result);

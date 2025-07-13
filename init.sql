@@ -1,5 +1,5 @@
 
-CREATE UNLOGGED TABLE payments (
+CREATE TABLE payments (
     correlationId UUID PRIMARY KEY,
     amount DECIMAL NOT NULL,
     processor VARCHAR(20) NOT NULL,
