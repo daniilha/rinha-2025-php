@@ -1,5 +1,5 @@
 <?php
-echo"olá";
+echo"olÃ¡";
 var_dump($_GET);
 $to = $_GET['to'];
 $from = $_GET['from'];
