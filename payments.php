@@ -1,43 +1,40 @@
 <?php
+
+date_default_timezone_set('UTC');
+$now = DateTime::createFromFormat('U.u', microtime(true));
+$d = $now->format('m-d-Y H:i:s.u');
+
 $asd = file_get_contents('php://input');
 $payment  = json_decode($asd, true);
-// echo($da['amount']);
-// echo($da['correlationId']);
 
 $ch = curl_init('http://payment-processor-default:8080/payments');
-// Setup request to send json via POST.
-// curl_setopt($ch, CURLOPT_URL, );
-
 $payload = (file_get_contents('php://input'));
+$payload = json_decode($payload, true);
+$payload['requestedAt']= $d;
+// $payload=json_encode($payload);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
-// Return response instead of printing.
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$result = curl_exec($ch);
+curl_close($ch);
 
-// curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-// curl_setopt($ch, CURLOPT_VERBOSE, 1);
+if ($result==false) {
+	$ch = curl_init('http://payment-processor-fallback:8080/payments');
+	$payload = (file_get_contents('php://input'));
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	$result = curl_exec($ch);
+	curl_close($ch);
+}
+if ($result!==false) {
+	$msg=json_decode($result, true)['message'];
 
-// var_dump($ch);
+	$dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
+	$result = pg_query($dbconn, 'select * from payments');
 
-// Send request.
-// $result = curl_exec($ch);
-// curl_close($ch);
-// Print response.
-// echo "<pre>$result</pre>";
-
-
-$d = date('Y-m-d H:i:s.u', time());
-
-
-$dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
-// var_dump($dbconn);
-$result = pg_query($dbconn, 'select * from payments');
-var_dump($result);
-
-$query= "insert INTO payments 
+	$query= "insert INTO payments 
 (correlationId,amount,requested_at,processor) 
-VALUES ('".$payment['correlationId']."',".$payment['amount'].",'".$d."','default')";
-echo $query;
-$result = pg_query($dbconn, $query);
-
-var_dump($result);
+VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','default')";
+	$result = pg_query($dbconn, $query);
+}
