@@ -15,19 +15,23 @@ $payload['requestedAt']= $d;
 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+curl_setopt($ch, CURLOPT_TIMEOUT, 400);
+
 $result = curl_exec($ch);
 curl_close($ch);
 
-if ($result==false) {
-	$processor = 'fallback';
-	$ch = curl_init('http://payment-processor-fallback:8080/payments');
-	$payload = (file_get_contents('php://input'));
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	$result = curl_exec($ch);
-	curl_close($ch);
-}
+// if ($result==false) {
+// 	$processor = 'fallback';
+// 	$ch = curl_init('http://payment-processor-fallback:8080/payments');
+// 	$payload = (file_get_contents('php://input'));
+// 	curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+// 	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
+// 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+// 	$result = curl_exec($ch);
+// 	curl_close($ch);
+// }
 
 if ($result!==false) {
 	$msg=json_decode($result, true)['message'];
