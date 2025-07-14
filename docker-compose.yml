@@ -16,8 +16,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.1"
-          memory: "16MB"
+          cpus: "1"
+          memory: "1600MB"
 
   backend-api-1:
     build:
@@ -28,6 +28,7 @@ services:
     restart: unless-stopped
     volumes:
     - .:/var/www/html
+    - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
     environment:
       - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
       - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
@@ -53,6 +54,7 @@ services:
     restart: unless-stopped
     volumes:
     - .:/var/www/html
+    - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
     environment:
       - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
       - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
@@ -66,8 +68,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2.0"
-          memory: "640MB"
+          cpus: "4.0"          
+          memory: "6400MB"
   api-db: 
     image: postgres:17-alpine
     container_name: api-db
@@ -86,8 +88,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "3.5"
-          memory: "500MB"
+          cpus: "4.0"
+          memory: "6400MB"
 
 networks:
   backend:

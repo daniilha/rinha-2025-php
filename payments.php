@@ -16,8 +16,8 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-curl_setopt($ch, CURLOPT_TIMEOUT, 400);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0.1);
+curl_setopt($ch, CURLOPT_TIMEOUT, 0.1);
 
 $result = curl_exec($ch);
 
@@ -27,15 +27,16 @@ $msg=$result;
 // var_dump($msg);
 curl_close($ch);
 
-if ($curl_error>0) {
+if (empty($result)) {
 	$processor = 'fallback';
 	$ch = curl_init('http://payment-processor-fallback:8080/payments');
 	// $payload = (file_get_contents('php://input'));
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-	curl_setopt($ch, CURLOPT_TIMEOUT, 400);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0.1);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 0.1);
 
 	// curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$result = curl_exec($ch);
@@ -51,3 +52,4 @@ if (!empty($result)) {
 VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "')";
 	$result = pg_query($dbconn, $query);
 }
+echo '';
