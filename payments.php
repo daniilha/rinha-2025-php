@@ -16,8 +16,8 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 230);
-curl_setopt($ch, CURLOPT_TIMEOUT_MS, 230);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 180);
+curl_setopt($ch, CURLOPT_TIMEOUT_MS, 180);
 
 $result = curl_exec($ch);
 
@@ -35,8 +35,8 @@ if (empty($result)) {
 	curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 230);
-	curl_setopt($ch, CURLOPT_TIMEOUT_MS, 230);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 180);
+	curl_setopt($ch, CURLOPT_TIMEOUT_MS, 180);
 
 	$result = curl_exec($ch);
 	curl_close($ch);
