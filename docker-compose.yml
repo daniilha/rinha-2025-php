@@ -17,7 +17,7 @@ services:
       resources:
         limits:
           cpus: "1"
-          memory: "1600MB"
+          memory: "160MB"
 
   backend-api-1:
     build:
@@ -42,7 +42,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "2.0"
+          cpus: "2"
           memory: "640MB"
 
   backend-api-2:
@@ -68,17 +68,17 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4.0"          
-          memory: "6400MB"
+          cpus: "3"          
+          memory: "640MB"
 
   backend-daemon:
     build:
       context: .
-    image: php:zts
+      dockerfile: daemon.Dockerfile
     container_name: backend-daemon
     restart: unless-stopped
     volumes:
-    - ./daemon/:/var/www/html
+    - ./daemon/:/srv
     - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
     environment:
       - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
@@ -95,8 +95,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4.0"          
-          memory: "6400MB"
+          cpus: "3"          
+          memory: "640MB"
   api-db: 
     image: postgres:17-alpine
     container_name: api-db
@@ -115,8 +115,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4.0"
-          memory: "6400MB"
+          cpus: "4"
+          memory: "640MB"
 
 networks:
   backend:
