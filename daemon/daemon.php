@@ -25,7 +25,7 @@ while (true) {
 			$result = $dbconn->query($query);
 		}
 		// var_dump($all);
-
+		$timeout = 500;
 		foreach ($all as $row) {
 			if (!empty($row['correlationid'])) {
 				// $row = pg_fetch_row($result);
@@ -42,8 +42,8 @@ while (true) {
 				curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
-				curl_setopt($ch, CURLOPT_TIMEOUT_MS, 500);
+				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
+				curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
 
 				$result = curl_exec($ch);
 
@@ -67,8 +67,8 @@ while (true) {
 					curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-					curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 500);
-					curl_setopt($ch, CURLOPT_TIMEOUT_MS, 500);
+					curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
+					curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
 
 					$result = curl_exec($ch);
 
