@@ -1,5 +1,7 @@
 <?php
 
+require './connection.php';
+
 date_default_timezone_set('UTC');
 $now = DateTime::createFromFormat('U.u', microtime(true));
 $d = $now->format('Y-m-d\TH:i:s.u\Z');
@@ -43,13 +45,13 @@ $processor = 'unset';
 // }
 
 // if (!empty($result)) {
-$dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
-$result = pg_query($dbconn, 'select * from payments');
+$dbconn = Connection::connect();
+// $result = pg_query($dbconn, 'select * from payments');
 
 $query= "insert INTO payments 
 (correlationId,amount,requested_at,processor,operation) 
 VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "','incoming')";
-$result = pg_query($dbconn, $query);
+$result = $dbconn->query($query);
 // }
 echo '
 ';
