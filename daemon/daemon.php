@@ -2,15 +2,24 @@
 
 while (true) {
 	$dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
-	$result = pg_query($dbconn, 'select correlationid, amount,requested_at, processor, operation from payments where operation like \'incoming\' ORDER BY requested_at ASC LIMIT 1 ');
+	$result = pg_query($dbconn, 'select correlationid, amount,requested_at, processor, operation from payments where operation like \'incoming\' ORDER BY requested_at ASC LIMIT 5 ');
 	if ($result) {
 		$all = pg_fetch_all($result);
+
+		$ids = [];
+		foreach ($all as $row) {
+			if (!empty($row['correlationid'])) {
+				$ids[]=$row['correlationid'];
+			}
+		}
+		$idin = implode(',', $ids);
+		$query= "UPDATE payments SET operation = 'busy' WHERE correlationid IN '{$idin}'";
+		$result = pg_query($dbconn, $query);
 
 		// var_dump($all);
 
 		foreach ($all as $row) {
 			if (!empty($row['correlationid'])) {
-				// echo "<br />\n";
 				// $row = pg_fetch_row($result);
 				$processor = 'default';
 				$ch = curl_init('http://payment-processor-default:8080/payments');
@@ -52,12 +61,12 @@ while (true) {
 				}
 
 				if (!empty($result)) {
-					$dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
-					$result = pg_query($dbconn, 'select * from payments');
+					// $dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
+					// $result = pg_query($dbconn, 'select * from payments');
 
 					$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE correlationid = '{$row['correlationid']}'";
 					$result = pg_query($dbconn, $query);
-
+					echo "<br />\n";
 					echo "correlationid: {$row['correlationid']}  amount: {$row['amount']}";
 				}
 			}
