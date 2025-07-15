@@ -7,10 +7,12 @@ while (true) {
 	$result = $dbconn->query('select correlationid, amount,requested_at, processor, operation 
 	from payments where operation like (CASE WHEN (SELECT COUNT(*) FROM payments WHERE operation LIKE \'busy\') > 0 THEN \'busy\' ELSE \'incoming\' END) 
 	ORDER BY requested_at ASC 
-	LIMIT 5 ');
+	LIMIT 50 ');
+
 	if ($result) {
 		$all = $result->fetchAll();
-
+		$query= "UPDATE payments SET operation = 'incoming' WHERE operation = 'failed'";
+		$dbconn->query($query);
 		$ids = [];
 		foreach ($all as $row) {
 			if (!empty($row['correlationid'])) {
