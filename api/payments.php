@@ -47,8 +47,8 @@ if (!empty($result)) {
 	$result = pg_query($dbconn, 'select * from payments');
 
 	$query= "insert INTO payments 
-(correlationId,amount,requested_at,processor) 
-VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "')";
+(correlationId,amount,requested_at,processor,operation) 
+VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "','incoming')";
 	$result = pg_query($dbconn, $query);
 }
 echo '';
