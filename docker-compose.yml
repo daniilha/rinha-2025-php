@@ -9,7 +9,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - backend-api-1
-      - backend-api-2
+      # - backend-api-2
     networks:
       - backend
       - payment-processor
@@ -42,34 +42,34 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.4"
-          memory: "64MB"
+          cpus: "0.1"
+          memory: "16MB"
 
-  backend-api-2:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    # image: php:fpm
-    container_name: rinha-backend-api-2
-    restart: unless-stopped
-    volumes:
-    - ./api/:/var/www/html
-    - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
-    environment:
-      - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
-      - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
-    depends_on:
-      - api-db
-    networks:
-      - backend
-      - payment-processor
-    expose:
-      - "9999"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.4"          
-          memory: "64MB"
+  # backend-api-2:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   # image: php:fpm
+  #   container_name: rinha-backend-api-2
+  #   restart: unless-stopped
+  #   volumes:
+  #   - ./api/:/var/www/html
+  #   - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
+  #   environment:
+  #     - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
+  #     - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
+  #   depends_on:
+  #     - api-db
+  #   networks:
+  #     - backend
+  #     - payment-processor
+  #   expose:
+  #     - "9999"
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "0.4"          
+  #         memory: "64MB"
 
   backend-daemon:
     build:
@@ -95,8 +95,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "3"          
-          memory: "640MB"
+          cpus: "0.2"          
+          memory: "16MB"
   api-db: 
     image: postgres:17-alpine
     container_name: api-db
@@ -115,8 +115,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "4"
-          memory: "640MB"
+          cpus: "0.5"
+          memory: "206MB"
 
   postgrest-1:
     image: postgrest/postgrest
@@ -136,8 +136,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"          
-          memory: "128MB"
+          cpus: "0.2"          
+          memory: "32MB"
   
   postgrest-2:
     image: postgrest/postgrest
@@ -157,8 +157,29 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"          
-          memory: "128MB"
+          cpus: "0.2"          
+          memory: "32MB"
+
+  postgrest-3:
+    image: postgrest/postgrest
+    container_name: postgrest-3
+    hostname: postgrest-3
+    ports:
+      - "3052:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@api-db:5432/rinha
+      PGRST_DB_SCHEMA : "public"
+      PGRST_DB_ANON_ROLE : "web_anon"
+      PGRST_OPENAPI_SERVER_PROXY_URI: http://127.0.0.1:3000
+    networks:
+      - backend
+    depends_on:
+      - api-db
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"          
+          memory: "32MB"
 
 networks:
   backend:
