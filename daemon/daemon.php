@@ -1,9 +1,9 @@
 <?php
 
 require './connection.php';
+$dbconn = Connection::connect();
 
 while (true) {
-	$dbconn = Connection::connect();
 	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
 	from payments where operation like (CASE WHEN (SELECT COUNT(*) FROM payments WHERE operation LIKE \'busy\') > 0 THEN \'busy\' ELSE \'incoming\' END) 
 	ORDER BY requested_at ASC 
