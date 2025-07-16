@@ -42,61 +42,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.1"
+          cpus: "0.2"
           memory: "32MB"
-
-  # backend-api-2:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   # image: php:fpm
-  #   container_name: rinha-backend-api-2
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./api/:/var/www/html
-  #   - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
-  #   environment:
-  #     - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
-  #     - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
-  #   depends_on:
-  #     - api-db
-  #   networks:
-  #     - backend
-  #     - payment-processor
-  #   expose:
-  #     - "9999"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.4"          
-  #         memory: "64MB"
-
-  # backend-daemon:
-  #   build:
-  #     context: .
-  #     dockerfile: daemon.Dockerfile
-  #   container_name: backend-daemon
-  #   restart: unless-stopped
-  #   volumes:
-  #   - ./daemon/:/srv
-  #   - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
-  #   environment:
-  #     - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
-  #     - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
-  #   depends_on:
-  #     - api-db
-  #   networks:
-  #     - backend
-  #     - payment-processor
-  #   ports:
-  #     - 8089:80
-  #   expose:
-  #     - "9999"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.2"          
-  #         memory: "16MB"
   api-db: 
     image: postgres:17-alpine
     container_name: api-db
@@ -115,7 +62,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.7"
+          cpus: "0.6"
           memory: "206MB"
 
   postgrest-1:

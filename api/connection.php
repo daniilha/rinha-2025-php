@@ -9,7 +9,7 @@ class Connection {
 
 		$dbconn =new \PDO('pgsql:host=api-db port=5432 dbname=rinha user=postgres password=postgres');
 		$dbconn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-		$dbconn->setAttribute(\PDO::ATTR_PERSISTENT, true);
+		$dbconn->setAttribute(\PDO::ATTR_PERSISTENT, false);
 		$connection=$dbconn;
 
 		// } else {
