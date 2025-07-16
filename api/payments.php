@@ -49,9 +49,13 @@ $dbconn = Connection::connect();
 // $result = pg_query($dbconn, 'select * from payments');
 
 $query= "insert INTO payments 
-(correlationId,amount,requested_at,processor,operation) 
+(\"correlationId\",amount,requested_at,processor,operation) 
 VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "','incoming')";
 $result = $dbconn->query($query);
 // }
+$dbconn = null;
 echo '
 ';
+
+gc_collect_cycles();
+gc_mem_caches();

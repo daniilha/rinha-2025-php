@@ -4,7 +4,7 @@ require './connection.php';
 
 while (true) {
 	$dbconn = Connection::connect();
-	$result = $dbconn->query('select correlationid, amount,requested_at, processor, operation 
+	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
 	from payments where operation like (CASE WHEN (SELECT COUNT(*) FROM payments WHERE operation LIKE \'busy\') > 0 THEN \'busy\' ELSE \'incoming\' END) 
 	ORDER BY requested_at ASC 
 	LIMIT 50 ');
@@ -15,26 +15,26 @@ while (true) {
 		$dbconn->query($query);
 		$ids = [];
 		foreach ($all as $row) {
-			if (!empty($row['correlationid'])) {
-				$ids[]=$row['correlationid'];
+			if (!empty($row['correlationId'])) {
+				$ids[]=$row['correlationId'];
 			}
 		}
 		$idin = implode("','", $ids);
 		if (!empty($idin)) {
-			$query= "UPDATE payments SET operation = 'busy' WHERE correlationid IN ('{$idin}')";
+			$query= "UPDATE payments SET operation = 'busy' WHERE payments.\"correlationId\" IN ('{$idin}')";
 			$result = $dbconn->query($query);
 		}
 		// var_dump($all);
 		$timeout = 500;
 		foreach ($all as $row) {
-			if (!empty($row['correlationid'])) {
+			if (!empty($row['correlationId'])) {
 				// $row = pg_fetch_row($result);
 				$processor = 'default';
 				$ch = curl_init('http://payment-processor-default:8080/payments');
 
 				$rq = (new DateTime($row['requested_at']));
 				$rqd = $rq->format('Y-m-d\TH:i:s.u\Z');
-				$payload = ['correlationId'=>$row['correlationid'],'amount'=>$row['amount'],'requestedAt'=>$rqd];
+				$payload = ['correlationId'=>$row['correlationId'],'amount'=>$row['amount'],'requestedAt'=>$rqd];
 
 				$payload=json_encode($payload);
 				// echo $payload;
@@ -85,12 +85,12 @@ while (true) {
 					// $dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
 					// $result = pg_query($dbconn, 'select * from payments');
 
-					$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE correlationid = '{$row['correlationid']}'";
+					$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
 					$result = $dbconn->query($query);
 					// echo "<br />\n";
-					// echo "correlationid: {$row['correlationid']}  amount: {$row['amount']}";
+					// echo "correlationId: {$row['correlationId']}  amount: {$row['amount']}";
 				} else {
-					$query= "UPDATE payments SET operation = 'failed' WHERE correlationid = '{$row['correlationid']}'";
+					$query= "UPDATE payments SET operation = 'failed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
 					$result = $dbconn->query($query);
 				}
 			}

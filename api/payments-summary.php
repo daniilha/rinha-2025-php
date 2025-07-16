@@ -13,7 +13,7 @@ $dtto = date($to);
 $dtfrom = date($from);
 
 $dbconn = Connection::connect();
-$query= "select COUNT(correlationid) as total, SUM(amount) as amount, processor from payments WHERE processor NOT LIKE 'unset' AND requested_at BETWEEN '{$from}' AND '{$to}' GROUP BY processor";
+$query= "select COUNT(payments.\"correlationId\") as total, SUM(amount) as amount, processor from payments WHERE processor NOT LIKE 'unset' AND requested_at BETWEEN '{$from}' AND '{$to}' GROUP BY processor";
 // $result = pg_query($dbconn, $query);
 
 $result = $dbconn->query($query);

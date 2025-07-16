@@ -1,10 +1,15 @@
 
-CREATE UNLOGGED TABLE payments (
-    correlationId UUID PRIMARY KEY,
+CREATE  TABLE payments (
+    "correlationId" UUID PRIMARY KEY,
     amount DECIMAL NOT NULL,
-    processor VARCHAR(20) NOT NULL,
-    requested_at TIMESTAMP NOT NULL,
-	operation VARCHAR(20) NOT NULL
+    processor VARCHAR(20)  DEFAULT 'unset',
+    requested_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
+	operation VARCHAR(20) DEFAULT 'incoming'
 );
 
 CREATE INDEX payments_requested_at ON payments (requested_at);
+
+create role web_anon nologin;
+
+grant usage on schema public to web_anon;
+grant all on public.payments to web_anon;
