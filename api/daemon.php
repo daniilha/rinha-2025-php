@@ -7,13 +7,13 @@ while (true) {
 	$dbconn->beginTransaction();
 	$query= "UPDATE payments SET processor = '{$host}', operation = 'busy' WHERE payments.\"correlationId\" IN (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
 	ORDER BY requested_at ASC 
-	LIMIT 20 FOR UPDATE)";
+	LIMIT 15 FOR UPDATE)";
 	$result = $dbconn->query($query);
 	$dbconn->commit();
 	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
 	from payments where operation like \'busy\' AND processor = \'' . $host . '\' 
 	ORDER BY requested_at ASC 
-	LIMIT 30');
+	LIMIT 30 FOR UPDATE');
 	$all = $result->fetchAll();
 	// var_dump($all);
 	if (!empty($all[0])) {
@@ -22,13 +22,13 @@ while (true) {
 		$ids = [];
 		foreach ($all as $row) {
 			if (!empty($row['correlationId'])) {
-				$ids[]=$row['correlationId'];
+				$ids[$row['correlationId']]=[];
 			}
 		}
-		$idin = implode("','", $ids);
-		if (!empty($idin)) {
-		}
-		$timeout = 600;
+		// $idin = implode("','", $ids);
+		// if (!empty($idin)) {
+		// }
+		$timeout = 500;
 		// echo "\n";
 		// echo "a : {$all[0]['correlationId']} host : {$host}";
 		$mh = curl_multi_init();
@@ -57,14 +57,14 @@ while (true) {
 		}
 		do {
 			curl_multi_exec($mh, $unfinishedHandles);
-			usleep(10);
+			// usleep(10);
 		} while ($unfinishedHandles);
 		curl_multi_close($mh);
-		$mh = curl_multi_init();
+		$mh2 = curl_multi_init();
 		foreach ($all as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
 			$cresult = curl_multi_getcontent($handle);
-
+			$msg=json_decode($cresult, true);
 			if (!empty($cresult)) {
 				// $dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
 				// $result = pg_query($dbconn, 'select * from payments');
@@ -79,7 +79,7 @@ while (true) {
 
 				$result = $dbconn->query($query);
 
-				$msg=json_decode($cresult, true);
+				
 				if ($msg['message']!='payment processed successfully') {
 					echo PHP_EOL, PHP_EOL;
 					print_r("\n" . $row['correlationId']);
@@ -101,16 +101,16 @@ while (true) {
 				$ids[$row['correlationId']]['handle']=$ch;
 
 				// $cresult = curl_exec($ch);
-				curl_multi_add_handle($mh, $ch);
+				curl_multi_add_handle($mh2, $ch);
 			}
 		}
 
 		do {
-			curl_multi_exec($mh, $unfinishedHandles);
-			usleep(10);
+			curl_multi_exec($mh2, $unfinishedHandles);
+			// usleep(10);
 		} while ($unfinishedHandles);
 
-		curl_multi_close($mh);
+		curl_multi_close($mh2);
 
 		foreach ($all as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
