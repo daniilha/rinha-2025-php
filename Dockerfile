@@ -13,4 +13,4 @@ ENV SCRIPT_FILENAME=/var/www/html/daemon.php
 
 ENV REQUEST_METHOD=GET
 
-CMD /usr/local/sbin/php-fpm -D; sleep 1; /usr/bin/bash -c "while true; do cgi-fcgi -bind -connect localhost:9000 2>&1; done"
+CMD /usr/local/sbin/php-fpm -D; sleep 1; while true; do cgi-fcgi -bind -connect localhost:9000; done

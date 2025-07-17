@@ -13,3 +13,7 @@ create role web_anon nologin;
 
 grant usage on schema public to web_anon;
 grant all on public.payments to web_anon;
+
+
+CREATE OR REPLACE VIEW public.busy
+AS SELECT * FROM payments WHERE operation LIKE 'busy';
