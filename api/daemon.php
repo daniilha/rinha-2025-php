@@ -2,15 +2,21 @@
 
 require './connection.php';
 $dbconn = Connection::connect();
-
+$host = gethostname();
 while (true) {
-	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
-	from payments where operation like (CASE WHEN (SELECT COUNT(*) FROM payments WHERE operation LIKE \'busy\') > 0 THEN \'busy\' ELSE \'incoming\' END) 
+	$dbconn->beginTransaction();
+	$query= "UPDATE payments SET processor = '{$host}', operation = 'busy' WHERE payments.\"correlationId\" IN (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
 	ORDER BY requested_at ASC 
-	LIMIT 50 ');
-
-	if ($result) {
-		$all = $result->fetchAll();
+	LIMIT 25 FOR UPDATE)";
+	$result = $dbconn->query($query);
+	$dbconn->commit();
+	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
+	from payments where operation like \'busy\' AND processor = \'' . $host . '\' 
+	ORDER BY requested_at ASC 
+	LIMIT 25 FOR UPDATE');
+	$all = $result->fetchAll();
+	// var_dump($all);
+	if (!empty($all[0])) {
 		$query= "UPDATE payments SET operation = 'incoming' WHERE operation = 'failed'";
 		$dbconn->query($query);
 		$ids = [];
@@ -21,11 +27,10 @@ while (true) {
 		}
 		$idin = implode("','", $ids);
 		if (!empty($idin)) {
-			$query= "UPDATE payments SET operation = 'busy' WHERE payments.\"correlationId\" IN ('{$idin}')";
-			$result = $dbconn->query($query);
 		}
-		// var_dump($all);
 		$timeout = 500;
+		// echo "\n";
+		// echo "a : {$all[0]['correlationId']} host : {$host}";
 		foreach ($all as $row) {
 			if (!empty($row['correlationId'])) {
 				// $row = pg_fetch_row($result);
@@ -45,7 +50,7 @@ while (true) {
 				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
 				curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
 
-				$result = curl_exec($ch);
+				$cresult = curl_exec($ch);
 
 				$curl_error = curl_error($ch);
 
@@ -59,7 +64,7 @@ while (true) {
 				// var_dump($msg);
 				curl_close($ch);
 
-				if (empty($result)) {
+				if (empty($cresult)) {
 					$processor = 'fallback';
 					$ch = curl_init('http://payment-processor-fallback:8080/payments');
 					// $payload = (file_get_contents('php://input'));
@@ -70,7 +75,7 @@ while (true) {
 					curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
 					curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
 
-					$result = curl_exec($ch);
+					$cresult = curl_exec($ch);
 
 					if (curl_errno($ch)) {
 						$err= curl_errno($ch);
@@ -81,12 +86,18 @@ while (true) {
 					curl_close($ch);
 				}
 
-				if (!empty($result)) {
+				if (!empty($cresult)) {
 					// $dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
 					// $result = pg_query($dbconn, 'select * from payments');
 
 					$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
 					$result = $dbconn->query($query);
+
+					$msg=json_decode($cresult, true);
+					if ($msg['message']!='payment processed successfully') {
+						print_r("\n" . $row['correlationId']);
+					}
+					// sleep(1);
 					// echo "<br />\n";
 					// echo "correlationId: {$row['correlationId']}  amount: {$row['amount']}";
 				} else {
