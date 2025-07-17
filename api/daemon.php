@@ -61,6 +61,8 @@ while (true) {
 		} while ($unfinishedHandles);
 		curl_multi_close($mh);
 		$mh2 = curl_multi_init();
+		$fallback = [];
+
 		foreach ($all as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
 			$cresult = curl_multi_getcontent($handle);
@@ -79,7 +81,6 @@ while (true) {
 
 				$result = $dbconn->query($query);
 
-				
 				if ($msg['message']!='payment processed successfully') {
 					echo PHP_EOL, PHP_EOL;
 					print_r("\n" . $row['correlationId']);
@@ -99,7 +100,7 @@ while (true) {
 				curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
 
 				$ids[$row['correlationId']]['handle']=$ch;
-
+				$fallback[]=$row;
 				// $cresult = curl_exec($ch);
 				curl_multi_add_handle($mh2, $ch);
 			}
@@ -112,11 +113,12 @@ while (true) {
 
 		curl_multi_close($mh2);
 
-		foreach ($all as $row) {
+		foreach ($fallback as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
 			$cresult = curl_multi_getcontent($handle);
+			$msg=json_decode($cresult, true);
 
-			if (!empty($cresult)) {
+			if (!empty($cresult)&&$msg['message']==='payment processed successfully') {
 				// $dbconn = pg_connect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
 				// $result = pg_query($dbconn, 'select * from payments');
 
