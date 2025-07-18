@@ -4,7 +4,8 @@ CREATE  TABLE payments (
     amount DECIMAL NOT NULL,
     processor VARCHAR(20)  DEFAULT 'unset',
     requested_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
-	operation VARCHAR(20) DEFAULT 'incoming'
+	operation VARCHAR(20) DEFAULT 'incoming',
+	daemon VARCHAR(20) DEFAULT 'unset'
 );
 
 CREATE INDEX payments_requested_at ON payments (requested_at);

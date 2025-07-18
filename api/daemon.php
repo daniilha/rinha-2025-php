@@ -3,22 +3,33 @@
 require './connection.php';
 $dbconn = Connection::connect();
 $host = gethostname();
-while (true) {
+$i = 0;
+$limit = 50;
+
+while (true &&$i<100) {
+	++$i;
 	$dbconn->beginTransaction();
-	$query= "UPDATE payments SET processor = '{$host}', operation = 'busy' WHERE payments.\"correlationId\" IN (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
-	ORDER BY requested_at ASC 
-	LIMIT 7 FOR UPDATE)";
-	$result = $dbconn->query($query);
-	$dbconn->commit();
+
 	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
-	from payments where operation like \'busy\' AND processor = \'' . $host . '\' 
+	from payments where operation like \'busy\' AND daemon = \'' . $host . '\' 
 	ORDER BY requested_at ASC 
-	LIMIT 7');
+	LIMIT ' . $limit);
 	$all = $result->fetchAll();
+
+	$n = count($all);
+
+	if ($n < $limit) {
+		$query= "UPDATE payments SET daemon = '{$host}', operation = 'busy'  FROM (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
+	ORDER BY requested_at ASC 
+	LIMIT {$limit} FOR UPDATE) AS pay WHERE payments.\"correlationId\" = pay.\"correlationId\"";
+		$result = $dbconn->query($query);
+	}
+	$dbconn->commit();
+
 	// var_dump($all);
 	if (!empty($all[0])) {
-		$query= "UPDATE payments SET operation = 'incoming' WHERE operation = 'failed'";
-		$dbconn->query($query);
+		// $query= "UPDATE payments SET operation = 'incoming' WHERE operation = 'failed'";
+		// $dbconn->query($query);
 		$ids = [];
 		foreach ($all as $row) {
 			if (!empty($row['correlationId'])) {
@@ -102,11 +113,15 @@ while (true) {
 			}
 		}
 
+		$dbconn->beginTransaction();
+
 		if (!empty($updids)) {
 			$upd = implode("','", $updids);
-			$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$query= "UPDATE payments SET processor = 'default', operation = 'completed' WHERE payments.\"correlationId\" IN ('{$upd}')";
 			$result = $dbconn->query($query);
 		}
+
+		$dbconn->commit();
 
 		do {
 			curl_multi_exec($mh2, $unfinishedHandles);
@@ -117,7 +132,7 @@ while (true) {
 
 		$updids = [];
 		$updidsf = [];
-
+		$updidsd = [];
 		foreach ($fallback as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
 			$cresult = curl_multi_getcontent($handle);
@@ -138,17 +153,20 @@ while (true) {
 
 				$result = $dbconn->query($query);
 
-				$msg=json_decode($cresult, true);
-				if ($msg['message']!='payment processed successfully') {
-					// echo PHP_EOL, PHP_EOL;
+				// $msg=json_decode($cresult, true);
+				// if ($msg['message']!='payment processed successfully') {
+				// 	// echo PHP_EOL, PHP_EOL;
 
-					var_dump($all);
-					die;
-				}
+				// 	var_dump($all);
+				// 	die;
+				// }
 				// sleep(1);
 				// echo "<br />\n";
 				// echo "correlationId: {$row['correlationId']}  amount: {$row['amount']}";
 				// }
+			}
+			if (!empty($cresult)&&$msg['message']!=='payment processed successfully') {
+				$updidsd[] = $row['correlationId'];
 			} else {
 				$updidsf[] = $row['correlationId'];
 
@@ -158,17 +176,27 @@ while (true) {
 			}
 		}
 
+		$dbconn->beginTransaction();
+
 		if (!empty($updids)) {
 			$upd = implode("','", $updids);
-			$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$query= "UPDATE payments SET processor = 'fallback', operation = 'completed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$result = $dbconn->query($query);
+		}
+
+		if (!empty($updidsd)) {
+			$upd = implode("','", $updidsd);
+			$query= "UPDATE payments SET operation = 'busy' WHERE payments.\"correlationId\" IN ('{$upd}')";
 			$result = $dbconn->query($query);
 		}
 
 		if (!empty($updidsf)) {
 			$upd = implode("','", $updidsf);
-			$query= "UPDATE payments SET  operation = 'failed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$query= "UPDATE payments SET  operation = 'busy' WHERE payments.\"correlationId\" IN ('{$upd}')";
 			$result = $dbconn->query($query);
 		}
+
+		$dbconn->commit();
 	} else {
 		usleep(1);
 	}
@@ -176,3 +204,4 @@ while (true) {
 	gc_collect_cycles();
 	gc_mem_caches();
 }
+$dbconn = null;
