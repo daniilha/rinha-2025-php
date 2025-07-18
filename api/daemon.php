@@ -62,7 +62,7 @@ while (true) {
 		curl_multi_close($mh);
 		$mh2 = curl_multi_init();
 		$fallback = [];
-
+		$updids = [];
 		foreach ($all as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
 			$cresult = curl_multi_getcontent($handle);
@@ -76,11 +76,7 @@ while (true) {
 				// } else {
 				// 	$processor = curl_getinfo($handle, CURLINFO_URL);
 				// }
-
-				$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
-
-				$result = $dbconn->query($query);
-
+				$updids[] = $row['correlationId'];
 				if ($msg['message']!='payment processed successfully') {
 					echo PHP_EOL, PHP_EOL;
 					print_r("\n" . $row['correlationId']);
@@ -106,12 +102,21 @@ while (true) {
 			}
 		}
 
+		if (!empty($updids)) {
+			$upd = implode("','", $updids);
+			$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$result = $dbconn->query($query);
+		}
+
 		do {
 			curl_multi_exec($mh2, $unfinishedHandles);
 			usleep(1);
 		} while ($unfinishedHandles);
 
 		curl_multi_close($mh2);
+
+		$updids = [];
+		$updidsf = [];
 
 		foreach ($fallback as $row) {
 			$handle = $ids[$row['correlationId']]['handle'];
@@ -129,7 +134,7 @@ while (true) {
 				// 	$processor = curl_getinfo($handle, CURLINFO_URL);
 				// }
 
-				$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
+				$updids[] = $row['correlationId'];
 
 				$result = $dbconn->query($query);
 
@@ -145,9 +150,24 @@ while (true) {
 				// echo "correlationId: {$row['correlationId']}  amount: {$row['amount']}";
 				// }
 			} else {
-				$query= "UPDATE payments SET operation = 'failed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
-				$result = $dbconn->query($query);
+				$updidsf[] = $row['correlationId'];
+
+				// $query= "UPDATE payments SET operation = 'failed' WHERE payments.\"correlationId\" = '{$row['correlationId']}'";
+
+				// $result = $dbconn->query($query);
 			}
+		}
+
+		if (!empty($updids)) {
+			$upd = implode("','", $updids);
+			$query= "UPDATE payments SET processor = '{$processor}', operation = 'completed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$result = $dbconn->query($query);
+		}
+
+		if (!empty($updidsf)) {
+			$upd = implode("','", $updidsf);
+			$query= "UPDATE payments SET  operation = 'failed' WHERE payments.\"correlationId\" IN ('{$upd}')";
+			$result = $dbconn->query($query);
 		}
 	} else {
 		usleep(1);
