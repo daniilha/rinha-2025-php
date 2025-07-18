@@ -16,4 +16,4 @@ grant all on public.payments to web_anon;
 
 
 CREATE OR REPLACE VIEW public.busy
-AS SELECT * FROM payments WHERE operation LIKE 'busy';
+AS SELECT * FROM payments WHERE operation LIKE 'busy' OR operation LIKE 'failed';

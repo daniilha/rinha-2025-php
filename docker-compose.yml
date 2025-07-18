@@ -88,7 +88,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.75"
+          cpus: "0.6"
           memory: "206MB"
 
   postgrest-1:
@@ -109,7 +109,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.15"          
+          cpus: "0.2"          
           memory: "32MB"
   
   postgrest-2:
@@ -130,7 +130,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.15"          
+          cpus: "0.2"          
           memory: "32MB"
 
   postgrest-3:
@@ -151,7 +151,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.15"          
+          cpus: "0.2"          
           memory: "32MB"
 
 networks:

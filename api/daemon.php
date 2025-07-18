@@ -7,13 +7,13 @@ while (true) {
 	$dbconn->beginTransaction();
 	$query= "UPDATE payments SET processor = '{$host}', operation = 'busy' WHERE payments.\"correlationId\" IN (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
 	ORDER BY requested_at ASC 
-	LIMIT 10 FOR UPDATE)";
+	LIMIT 7 FOR UPDATE)";
 	$result = $dbconn->query($query);
 	$dbconn->commit();
 	$result = $dbconn->query('select payments."correlationId" as "correlationId", amount,requested_at, processor, operation 
 	from payments where operation like \'busy\' AND processor = \'' . $host . '\' 
 	ORDER BY requested_at ASC 
-	LIMIT 20');
+	LIMIT 7');
 	$all = $result->fetchAll();
 	// var_dump($all);
 	if (!empty($all[0])) {
@@ -57,7 +57,7 @@ while (true) {
 		}
 		do {
 			curl_multi_exec($mh, $unfinishedHandles);
-			usleep(1);
+			// usleep(1);
 		} while ($unfinishedHandles);
 		curl_multi_close($mh);
 		$mh2 = curl_multi_init();
@@ -110,7 +110,7 @@ while (true) {
 
 		do {
 			curl_multi_exec($mh2, $unfinishedHandles);
-			usleep(1);
+			// usleep(1);
 		} while ($unfinishedHandles);
 
 		curl_multi_close($mh2);
@@ -172,4 +172,7 @@ while (true) {
 	} else {
 		usleep(1);
 	}
+
+	gc_collect_cycles();
+	gc_mem_caches();
 }
