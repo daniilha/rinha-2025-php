@@ -8,6 +8,13 @@ CREATE  TABLE payments (
 	daemon VARCHAR(20) DEFAULT 'unset'
 );
 
+CREATE  TABLE completed_payments (
+    "correlationId" UUID PRIMARY KEY,
+    amount DECIMAL NOT NULL,
+    processor VARCHAR(20)  DEFAULT 'unset',
+    requested_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX payments_requested_at ON payments (requested_at);
 
 create role web_anon nologin;
