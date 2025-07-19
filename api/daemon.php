@@ -1,10 +1,16 @@
 <?php
 
 require './connection.php';
-$dbconn = Connection::connect();
-$host = gethostname();
+try {
+	$dbconn = Connection::connect();
+} catch(Exception $e) {
+	echo 'DB indisponivel, tentando novamente em 1s...';
+	sleep(1);
+	die;
+}
+	$host = gethostname();
 $i = 0;
-$limit = 10;
+$limit = 5;
 
 while (true &&$i<1000) {
 	++$i;
@@ -38,7 +44,7 @@ while (true &&$i<1000) {
 		// $idin = implode("','", $ids);
 		// if (!empty($idin)) {
 		// }
-		$timeout = 600;
+		$timeout = 6000;
 		// echo "\n";
 		// echo "a : {$all[0]['correlationId']} host : {$host}";
 		$mh = curl_multi_init();
@@ -77,7 +83,7 @@ while (true &&$i<1000) {
 		do {
 			$status = curl_multi_exec($mh, $activeCount);
 			if ($status == CURLM_OK && $activeCount) {
-				curl_multi_select($mh,0.1);
+				curl_multi_select($mh, 0.1);
 
 				while ($done = curl_multi_info_read($mh)) {
 					$info = curl_getinfo($done['handle']);
