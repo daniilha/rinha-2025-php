@@ -245,11 +245,11 @@ while (true &&$i<1000) {
 		$resqueryas = '';
 		$updids = [];
 		do {
-			$status = curl_multi_exec($mh, $activeCount);
+			$status = curl_multi_exec($mh2, $activeCount);
 			if ($status == CURLM_OK && $activeCount) {
-				curl_multi_select($mh, 0.1);
+				curl_multi_select($mh2, 0.1);
 
-				while ($done = curl_multi_info_read($mh)) {
+				while ($done = curl_multi_info_read($mh2)) {
 					$info = curl_getinfo($done['handle']);
 
 					$output = curl_multi_getcontent($done['handle']);
