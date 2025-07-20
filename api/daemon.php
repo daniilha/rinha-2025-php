@@ -3,16 +3,17 @@
 require './connection.php';
 try {
 	$dbconn = Connection::connect();
-} catch(Exception $e) {
-	echo 'DB indisponivel, tentando novamente em 1s...';
-	sleep(1);
+} catch (Exception $e) {
+	echo PHP_EOL;
+	echo 'DB indisponivel, tentando novamente...';
+	usleep(100);
 	die;
 }
 	$host = gethostname();
 $i = 0;
 $limit = 5;
 
-while (true &&$i<10000) {
+while (true &&$i<1000) {
 	++$i;
 	// $dbconn->beginTransaction();
 
@@ -83,7 +84,7 @@ while (true &&$i<10000) {
 		do {
 			$status = curl_multi_exec($mh, $activeCount);
 			if ($status == CURLM_OK && $activeCount) {
-				curl_multi_select($mh, 0.1);
+				curl_multi_select($mh);
 
 				while ($done = curl_multi_info_read($mh)) {
 					$info = curl_getinfo($done['handle']);
@@ -105,7 +106,7 @@ while (true &&$i<10000) {
 						// $idcor = array_search($done['handle'], )['correlationId'];
 						// var_dump($idcor);
 						// if ($handles['handle']==$done['handle']) {
-						// $updids[]=$idcor;
+						$updids[]=$idcor;
 						// $handle = $ids[$idcor]['handle'];
 						// $cresult = curl_multi_getcontent($handle);
 						// $msg=json_decode($cresult, true);
@@ -253,7 +254,7 @@ while (true &&$i<10000) {
 		do {
 			$status = curl_multi_exec($mh2, $activeCount);
 			if ($status == CURLM_OK && $activeCount) {
-				curl_multi_select($mh2, 0.1);
+				curl_multi_select($mh2);
 
 				while ($done = curl_multi_info_read($mh2)) {
 					$info = curl_getinfo($done['handle']);
@@ -273,21 +274,21 @@ while (true &&$i<10000) {
 						$idcor = (array_search($done['handle'], array_column($ids, 'handle', 'correlationId')));
 
 						// if ($handles['handle']==$done['handle']) {
-						// $updids[]=$idcor;
+						$updids[]=$idcor;
 						// 	// $handle = $ids[$idcor]['handle'];
 						// 	// $cresult = curl_multi_getcontent($handle);
 						// 	// $msg=json_decode($cresult, true);
 						// 	// if (!empty($msg['message'])&&$msg['message']==='payment processed successfully') {
-							$payload=$ids[$idcor]['payload'];
-							$query = 'INSERT INTO completed_payments ("correlationId",amount,requested_at,processor) VALUES ' .
-							"('" . $payload['correlationId'] . "'," . $payload['amount'] . ",'" . $payload['requestedAt'] . "','fallback')
+						$payload=$ids[$idcor]['payload'];
+						$query = 'INSERT INTO completed_payments ("correlationId",amount,requested_at,processor) VALUES ' .
+						"('" . $payload['correlationId'] . "'," . $payload['amount'] . ",'" . $payload['requestedAt'] . "','fallback')
 						ON CONFLICT DO NOTHING; ";
 
-							$result = $dbconn->query($query);
-							// }
-							$updids[] = $row['correlationId'];
-							$query = "DELETE FROM payments WHERE payments.\"correlationId\" = ('{$row['correlationId']}'); ";
-							$result = $dbconn->query($query);
+						$result = $dbconn->query($query);
+						// }
+						$updids[] = $row['correlationId'];
+						$query = "DELETE FROM payments WHERE payments.\"correlationId\" = ('{$row['correlationId']}'); ";
+						$result = $dbconn->query($query);
 						// }
 						// }
 					}
@@ -432,7 +433,7 @@ while (true &&$i<10000) {
 		}
 		// $dbconn->commit();
 	} else {
-		usleep(10);
+		usleep(1);
 	}
 
 	gc_collect_cycles();

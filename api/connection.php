@@ -6,12 +6,12 @@ class Connection {
 	public static function connect() {
 		// if (empty($connection)) {
 		// $dbconn = pg_pconnect('host=api-db port=5432 dbname=rinha user=postgres password=postgres');
-
-		$dbconn =new \PDO('pgsql:host=api-db port=5432 dbname=rinha user=postgres password=postgres');
-		$dbconn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-		$dbconn->setAttribute(\PDO::ATTR_PERSISTENT, false);
-		$connection=$dbconn;
-
+		if (empty($connection)) {
+			$dbconn =new \PDO('pgsql:host=api-db port=5432 dbname=rinha user=postgres password=postgres');
+			$dbconn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+			$dbconn->setAttribute(\PDO::ATTR_PERSISTENT, false);
+			$connection=$dbconn;
+		}
 		// } else {
 		return $connection;
 		// }
