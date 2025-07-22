@@ -9,15 +9,19 @@ try {
 	usleep(100);
 	die;
 }
-	$host = gethostname();
+$host = gethostname();
+$daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
 $limit = 10;
 
+$query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
+$result = $dbconn->query($query);
+
 $selectquery = $dbconn->prepare("select payments.\"correlationId\" as \"correlationId\", amount,requested_at, processor, operation 
-from payments where operation like 'busy' AND daemon = '{$host}' 
+from payments where operation like 'busy' AND daemon = '{$daemon}' 
 LIMIT {$limit}");
 
-$updatequery = $dbconn->prepare("UPDATE payments SET daemon = '{$host}', operation = 'busy'  FROM (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
+$updatequery = $dbconn->prepare("UPDATE payments SET processor = '{$host}', daemon = '{$daemon}', operation = 'busy'  FROM (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
 ORDER BY requested_at ASC 
 LIMIT {$limit} FOR UPDATE) AS pay WHERE payments.\"correlationId\" = pay.\"correlationId\"");
 
@@ -468,4 +472,5 @@ while (true &&$i<1000) {
 	gc_collect_cycles();
 	gc_mem_caches();
 }
+
 $dbconn = null;
