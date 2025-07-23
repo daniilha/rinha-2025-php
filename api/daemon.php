@@ -6,13 +6,13 @@ try {
 } catch (Exception $e) {
 	echo PHP_EOL;
 	echo 'DB indisponivel, tentando novamente...';
-	usleep(100);
+	sleep(1);
 	die;
 }
 $host = gethostname();
 $daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
-$limit = 10;
+$limit = 25;
 
 $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
 $result = $dbconn->query($query);
@@ -32,6 +32,39 @@ LIMIT {$limit} FOR UPDATE) AS pay WHERE payments.\"correlationId\" = pay.\"corre
 while (true &&$i<1000) {
 	++$i;
 	// $dbconn->beginTransaction();
+	$iterator = apcu_fetch('iterator');
+
+	if ($iterator!==false) {
+		apcu_add('lock', true);
+
+		$query= 'INSERT INTO payments ("correlationId",amount) VALUES ';
+		// $inserts = [];
+		// foreach ($updids as $ins) {
+		// 	$payload = $ids[$ins]['payload'];
+		// 	$querystring = "('" . $payload['correlationId'] . "'," . $payload['amount'] . ",'" . $payload['requestedAt'] . "','default')";
+		// 	$inserts[]=$querystring;
+		// }
+		// $in = implode(', ', $inserts);
+		// $query.= $in;
+		// $query.=' ON CONFLICT DO NOTHING';
+		// $result = $dbconn->query($query);
+		$inserts = [];
+		for ($i = 0; $i<$iterator; ++$i) {
+			$pay = apcu_fetch($i . '');
+			$payload = json_decode($pay, true);
+			if (!empty($payload)) {
+				$querystring = "('" . $payload['correlationId'] . "'," . $payload['amount'] . ')';
+				$inserts[]=$querystring;
+			}
+		}
+		$in = implode(', ', $inserts);
+		$query.= $in;
+		$query.=' ON CONFLICT DO NOTHING';
+		apcu_clear_cache();
+		if ($in!=='') {
+			$result = $dbconn->query($query);
+		}
+	}
 
 	$result = $selectquery->execute();
 	if ($result) {
@@ -61,7 +94,7 @@ while (true &&$i<1000) {
 			// $idin = implode("','", $ids);
 			// if (!empty($idin)) {
 			// }
-			$timeout = 600;
+			$timeout = 6000;
 			// echo "\n";
 			// echo "a : {$all[0]['correlationId']} host : {$host}";
 			$mh = curl_multi_init();
@@ -77,6 +110,9 @@ while (true &&$i<1000) {
 
 					$rq = DateTime::createFromFormat('U.u', microtime(true));
 					// $d = $now->format('Y-m-d\TH:i:s.u\Z');
+					if ($rq ===false) {
+						$rq = DateTime::createFromFormat('U.u', microtime(true));
+					}
 
 					$rqd = $rq->format('Y-m-d\TH:i:s.u\Z');
 					$payload = ['correlationId'=>$row['correlationId'],'amount'=>$row['amount'],'requestedAt'=>$rqd];

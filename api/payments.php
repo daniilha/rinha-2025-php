@@ -9,6 +9,24 @@ $d = $now->format('Y-m-d\TH:i:s.u\Z');
 $asd = file_get_contents('php://input');
 $payment  = json_decode($asd, true);
 $processor = 'unset';
+$pay = [];
+$pay['correlationId'] = $payment['correlationId'];
+$pay['amount'] =  $payment['amount'];
+apcu_fetch('lock', $success);
+if ($success) {
+	while ($success) {
+		apcu_fetch('lock', $success);
+		usleep(random_int(1, 3));
+	}
+}
+$iterator = apcu_fetch('iterator');
+if ($iterator === false) {
+	$iterator = 0;
+	apcu_add('iterator', $iterator);
+}
+$payload = json_encode($pay);
+apcu_add($iterator . '', $payload);
+apcu_inc('iterator');
 // $ch = curl_init('http://payment-processor-default:8080/payments');
 // $payload = (file_get_contents('php://input'));
 // $payload = json_decode($payload, true);
@@ -45,15 +63,15 @@ $processor = 'unset';
 // }
 
 // if (!empty($result)) {
-$dbconn = Connection::connect();
-// $result = pg_query($dbconn, 'select * from payments');
+// $dbconn = Connection::connect();
+// // $result = pg_query($dbconn, 'select * from payments');
 
-$query= "insert INTO payments 
-(\"correlationId\",amount,requested_at,processor,operation) 
-VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "','incoming')";
-$result = $dbconn->query($query);
-// }
-$dbconn = null;
+// $query= "insert INTO payments
+// (\"correlationId\",amount,requested_at,processor,operation)
+// VALUES ('" . $payment['correlationId'] . "'," . $payment['amount'] . ",'" . $d . "','" . $processor . "','incoming')";
+// $result = $dbconn->query($query);
+// // }
+// $dbconn = null;
 echo '
 ';
 

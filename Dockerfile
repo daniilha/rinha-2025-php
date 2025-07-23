@@ -2,13 +2,13 @@ FROM php:fpm
 
 WORKDIR /var/www/html
 
-RUN apt-get update && apt-get install -y libpq-dev fcgiwrap libmemcached-dev zlib1g-dev 
+RUN apt-get update && apt-get install -y libpq-dev fcgiwrap zlib1g-dev 
 
-RUN pecl install memcached
+RUN pecl install apcu
 
 RUN docker-php-ext-install pdo pdo_pgsql pgsql 
 
-RUN docker-php-ext-enable memcached
+RUN docker-php-ext-enable apcu
 
 ENV SCRIPT_NAME=/daemon.php
 
