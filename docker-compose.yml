@@ -89,7 +89,7 @@ services:
       resources:
         limits:
           cpus: "0.6"
-          memory: "206MB"
+          memory: "78MB"
 
   # postgrest-1:
   #   image: postgrest/postgrest
