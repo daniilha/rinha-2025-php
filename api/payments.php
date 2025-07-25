@@ -1,14 +1,14 @@
 <?php
 
-require './connection.php';
+// require './connection.php';
 
-date_default_timezone_set('UTC');
-$now = DateTime::createFromFormat('U.u', microtime(true));
-$d = $now->format('Y-m-d\TH:i:s.u\Z');
+// date_default_timezone_set('UTC');
+// $now = DateTime::createFromFormat('U.u', microtime(true));
+// $d = $now->format('Y-m-d\TH:i:s.u\Z');
 
 $asd = file_get_contents('php://input');
 $payment  = json_decode($asd, true);
-$processor = 'unset';
+// $processor = 'unset';
 $pay = [];
 $pay['correlationId'] = $payment['correlationId'];
 $pay['amount'] =  $payment['amount'];
@@ -72,8 +72,3 @@ apcu_inc('iterator');
 // $result = $dbconn->query($query);
 // // }
 // $dbconn = null;
-echo '
-';
-
-gc_collect_cycles();
-gc_mem_caches();

@@ -16,7 +16,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.1"
+          cpus: "0.2"
           memory: "16MB"
 
   backend-api-1:
@@ -42,7 +42,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.4"
+          cpus: "0.55"
           memory: "128MB"
 
   backend-api-2:
@@ -68,8 +68,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.4"
+          cpus: "0.55"
           memory: "128MB"
+
   api-db: 
     image: postgres:17-alpine
     container_name: api-db
@@ -88,7 +89,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.6"
+          cpus: "0.2"
           memory: "78MB"
 
   # postgrest-1:
