@@ -15,6 +15,14 @@ CREATE  TABLE completed_payments (
     requested_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE  TABLE services (
+    ds VARCHAR(20) PRIMARY KEY,
+    failing INTEGER,
+    rs_delay INTEGER,
+    last_update INTEGER,
+	lock BOOLEAN 
+);
+
 CREATE INDEX payments_requested_at ON payments (requested_at);
 
 create role web_anon nologin;

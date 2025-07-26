@@ -1,19 +1,23 @@
 <?php
 
+require './connection.php';
+try {
+	$dbconn = Connection::connect();
+} catch (Exception $e) {
+	echo PHP_EOL;
+	echo 'DB indisponivel, tentando novamente...';
+	sleep(1);
+	die;
+}
+
 // $mc = new Memcached();
 // $mc->addServer('mymemcached', 11211);
-apcu_add('key1', 'value1');
-apcu_add('key2', 'value2');
-apcu_add('key3', 'value3');
 
-echo 'key1 : ' . apcu_fetch('iterator') . "\n";
-echo 'key2 : ' . apcu_fetch('lock') . "\n";
-echo 'key3 : ' . apcu_fetch(0) . "\n";
+$servicequery = 'SELECT * FROM services';
+$re = $dbconn->query($servicequery);
+$svc = $re->fetchAll();
+$svcs = array_combine(array_column($svc, 'ds'), $svc);
 
-echo 'key3 : ' . apcu_fetch('key3') . "\n";
-
-echo'olá';
-var_dump($_GET);
-var_dump($_POST);
+print_r($svcs);
 
 phpinfo();
