@@ -14,7 +14,8 @@ $daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
 $limit = 25;
 $timeout = 1000;
-
+$default_url = getenv('PAYMENT_PROCESSOR_URL_DEFAULT');
+$fallback_url = getenv('PAYMENT_PROCESSOR_URL_FALLBACK');
 $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
 $result = $dbconn->query($query);
 
@@ -102,6 +103,8 @@ while (true &&$i<1000) {
 
 			$mh = curl_multi_init();
 			$handles = [];
+			$updids = [];
+
 			if ($default['failing']==0) {
 				foreach ($all as $row) {
 					if (!empty($row['correlationId'])) {
@@ -132,7 +135,7 @@ while (true &&$i<1000) {
 						curl_multi_add_handle($mh, $ch);
 					}
 				}
-				$updids = [];
+				
 
 				do {
 					$status = curl_multi_exec($mh, $activeCount);
@@ -165,7 +168,7 @@ while (true &&$i<1000) {
 			}
 			curl_multi_close($mh);
 			$mh2 = curl_multi_init();
-			$fallback = [];
+			$fallbacks = [];
 
 			foreach ($all as $row) {
 				if (!in_array($row['correlationId'], $updids)) {
@@ -205,7 +208,7 @@ while (true &&$i<1000) {
 						$ids[$row['correlationId']]['correlationId']=$row['correlationId'];
 
 						$ids[$row['correlationId']]['handle']=$ch;
-						$fallback[]=$row;
+						$fallbacks[]=$row;
 
 						curl_multi_add_handle($mh2, $ch);
 					}
@@ -262,7 +265,7 @@ while (true &&$i<1000) {
 
 				$updidsf = [];
 				$updidsd = [];
-				foreach ($fallback as $row) {
+				foreach ($fallbacks as $row) {
 					if (!in_array($row['correlationId'], $updids)) {
 						$handle = $ids[$row['correlationId']]['handle'];
 						$cresult = curl_multi_getcontent($handle);
