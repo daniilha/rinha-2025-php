@@ -32,7 +32,7 @@ while (true &&$i<1000) {
 
 	$servicequery = 'SELECT * FROM services';
 	$re = $dbconn->query($servicequery);
-	$svc = $re->fetchAll();
+	$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
 	$svcs = array_combine(array_column($svc, 'ds'), $svc);
 	$default = $svcs['default'];
 	$fallback = $svcs['fallback'];
@@ -62,7 +62,7 @@ while (true &&$i<1000) {
 
 	$result = $selectquery->execute();
 	if ($result) {
-		$all = $selectquery->fetchAll();
+		$all = $selectquery->fetchAll(\PDO::FETCH_ASSOC);
 
 		$n = count($all);
 

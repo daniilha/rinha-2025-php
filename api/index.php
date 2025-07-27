@@ -15,7 +15,7 @@ try {
 
 $servicequery = 'SELECT * FROM services';
 $re = $dbconn->query($servicequery);
-$svc = $re->fetchAll();
+$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
 $svcs = array_combine(array_column($svc, 'ds'), $svc);
 
 print_r($svcs);

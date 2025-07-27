@@ -18,7 +18,7 @@ $query= "select COUNT(completed_payments.\"correlationId\") as total, SUM(amount
 
 $result = $dbconn->query($query);
 
-$data = $result->fetchAll();
+$data = $result->fetchAll(\PDO::FETCH_ASSOC);
 
 $final=[];
 foreach ($data as $row) {
