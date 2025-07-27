@@ -13,6 +13,7 @@ $host = gethostname();
 $daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
 $limit = 25;
+$timeout = 1000;
 
 $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
 $result = $dbconn->query($query);
@@ -29,26 +30,6 @@ while (true &&$i<1000) {
 	++$i;
 
 	$iterator = apcu_fetch('iterator');
-
-	$servicequery = 'SELECT * FROM services';
-	$re = $dbconn->query($servicequery);
-	$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
-	$svcs = array_combine(array_column($svc, 'ds'), $svc);
-	if (isset($default)) {
-		if ($default['last_update'] < $svcs['default']['last_update']) {
-			$default = $svcs['default'];
-		}
-	} else {
-		$default = $svcs['default'];
-	}
-
-	if (isset($fallback)) {
-		if ($fallback['last_update'] < $svcs['fallback']['last_update']) {
-			$fallback = $svcs['fallback'];
-		}
-	} else {
-		$fallback = $svcs['fallback'];
-	}
 
 	if ($iterator!==false) {
 		apcu_add('lock', true);
@@ -73,6 +54,33 @@ while (true &&$i<1000) {
 		}
 	}
 
+	$servicequery = 'SELECT * FROM services';
+	$re = $dbconn->query($servicequery);
+	$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
+	$svcs = array_combine(array_column($svc, 'ds'), $svc);
+	if (isset($default)) {
+		if ($default['last_update'] < $svcs['default']['last_update']) {
+			$default = $svcs['default'];
+		}
+	} else {
+		$default = $svcs['default'];
+	}
+
+	if (isset($fallback)) {
+		if ($fallback['last_update'] < $svcs['fallback']['last_update']) {
+			$fallback = $svcs['fallback'];
+		}
+	} else {
+		$fallback = $svcs['fallback'];
+	}
+
+	if ($default['failing']==1&&$fallback['failing']==1) {
+		$servicequery = 'UPDATE services SET failing = 1';
+		$re = $dbconn->query($servicequery);
+		// sleep(1);
+		die;
+	}
+
 	$result = $selectquery->execute();
 	if ($result) {
 		$all = $selectquery->fetchAll(\PDO::FETCH_ASSOC);
@@ -91,7 +99,6 @@ while (true &&$i<1000) {
 				}
 			}
 
-			$timeout = 1000;
 
 			$mh = curl_multi_init();
 			$handles = [];
@@ -178,6 +185,7 @@ while (true &&$i<1000) {
 					}
 
 					if (empty($msg['message'])) {
+						$default['failing']=1;
 						$ids[$row['correlationId']]['processor'] = 'fallback';
 						$ch = curl_init('http://payment-processor-fallback:8080/payments');
 
@@ -269,6 +277,8 @@ while (true &&$i<1000) {
 							$updidsd[] = $row['correlationId'];
 						}
 						if (empty($msg['message'])) {
+							$fallback['failing']=1;
+
 							$updidsf[] = $row['correlationId'];
 						}
 					}
