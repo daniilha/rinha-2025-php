@@ -1,23 +1,23 @@
-# ?? Rinha de Backend 2025 - Rust
+# Rinha 2025 em PHP - Meditação ZEND????
 
-Este repositório contém a minha participação na **Rinha de Backend 2025**, implementada em **Rust**.
+Seguindo a arquitetura proposta no vídeo do desafio, a solução são duas APIs rodando php-fpm, ingerindo os payments com APCu e processando com um daemon utilizando postgres, seguindo o princípio de que menos é mais. 
 
-## ?? Tecnologias Utilizadas
+Só pra mostrar que PHP ainda vale alguma coisa em webdev hahaha
 
-- [Rust](https://www.rust-lang.org/)
-- [Axum 0.8](https://docs.rs/axum) ? Web framework moderno, baseado em Tokio
-- [Tokio 1.46](https://tokio.rs/) ? Runtime assíncrono de alta performance
-- [Serde](https://serde.rs/) ? Serialização/deserialização eficiente de JSON
-- [Reqwest](https://docs.rs/reqwest) ? Cliente HTTP assíncrono
-- [Redis 0.32](https://docs.rs/redis) ? Gerenciamento de cache, fila de transações, etc
-- [Chrono](https://docs.rs/chrono) ? Manipulação de datas e horários
+##  Tecnologias
 
-## ?? Como rodar
+* **Nginx** - Load balancing
+* **PHP-FPM** - Controlador de connection pool
+* **PHP8.4** - Engine
+* **ACPu** - Armazenamento em memória PHP
+* **PDO** - Controlador de conexão SQL
+* **Postgres** - Armazenamento SQL
 
-Certifique-se de ter o **Docker** e o **Docker Compose** instalados.
+## Como Rodar
+
 
 ```bash
-git clone https://github.com/andersongomes001/rinha-2025.git
-cd rinha-2025
-docker compose up --build
+git clone https://github.com/daniilha/rinha-2025-php
+cd rinha-2025-php
+docker compose up -d --build
 ```
