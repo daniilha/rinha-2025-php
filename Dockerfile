@@ -10,6 +10,10 @@ RUN docker-php-ext-install pdo pdo_pgsql pgsql
 
 RUN docker-php-ext-enable apcu
 
+COPY ./api/ /var/www/html/
+
+COPY www.conf /usr/local/etc/php-fpm.d/www.conf
+
 ENV SCRIPT_NAME=/daemon.php
 
 ENV SCRIPT_FILENAME=/var/www/html/daemon.php

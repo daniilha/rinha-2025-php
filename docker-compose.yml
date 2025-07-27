@@ -26,9 +26,6 @@ services:
     # image: php:fpm
     container_name: rinha-backend-api-1
     restart: unless-stopped
-    volumes:
-    - ./api/:/var/www/html
-    - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
     environment:
       - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
       - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
@@ -50,9 +47,6 @@ services:
     # image: php:fpm
     container_name: rinha-backend-api-2
     restart: unless-stopped
-    volumes:
-    - ./api/:/var/www/html
-    - ./www.conf:/usr/local/etc/php-fpm.d/www.conf
     environment:
       - PAYMENT_PROCESSOR_URL_DEFAULT=http://payment-processor-default:8080
       - PAYMENT_PROCESSOR_URL_FALLBACK=http://payment-processor-fallback:8080
