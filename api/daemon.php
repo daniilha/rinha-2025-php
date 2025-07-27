@@ -34,8 +34,21 @@ while (true &&$i<1000) {
 	$re = $dbconn->query($servicequery);
 	$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
 	$svcs = array_combine(array_column($svc, 'ds'), $svc);
-	$default = $svcs['default'];
-	$fallback = $svcs['fallback'];
+	if (isset($default)) {
+		if ($default['last_update'] < $svcs['default']['last_update']) {
+			$default = $svcs['default'];
+		}
+	} else {
+		$default = $svcs['default'];
+	}
+
+	if (isset($fallback)) {
+		if ($fallback['last_update'] < $svcs['fallback']['last_update']) {
+			$fallback = $svcs['fallback'];
+		}
+	} else {
+		$fallback = $svcs['fallback'];
+	}
 
 	if ($iterator!==false) {
 		apcu_add('lock', true);
