@@ -56,5 +56,5 @@ if (count($svc)==0) {
 	}
 	$dbconn = null;
 	// }
-	sleep(4);
+	sleep(5);
 }

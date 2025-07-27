@@ -78,7 +78,7 @@ while (true &&$i<1000) {
 				}
 			}
 
-			$timeout = 6000;
+			$timeout = 1000;
 
 			$mh = curl_multi_init();
 			$handles = [];
@@ -100,12 +100,12 @@ while (true &&$i<1000) {
 						$ids[$row['correlationId']]['payload']=$payload;
 						$ids[$row['correlationId']]['correlationId']=$row['correlationId'];
 						$payload=json_encode($payload);
-
+						$ctimeout = $default['rs_delay'] + $timeout;
 						curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 						curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
-						curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
+						curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $ctimeout);
+						curl_setopt($ch, CURLOPT_TIMEOUT_MS, $ctimeout);
 						$ids[$row['correlationId']]['handle']=$ch;
 
 						$handles[]= $ch;
@@ -176,9 +176,10 @@ while (true &&$i<1000) {
 						curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 						curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
 						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						$ctimeout = $fallback['rs_delay'] + $timeout;
 
-						curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
-						curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
+						curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $ctimeout);
+						curl_setopt($ch, CURLOPT_TIMEOUT_MS, $ctimeout);
 
 						$ids[$row['correlationId']]['correlationId']=$row['correlationId'];
 
