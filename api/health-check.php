@@ -23,6 +23,11 @@ while ($i<100) {
 		$dbconn->query($servicequery);
 	} else {
 		$svcs = array_combine(array_column($svc, 'ds'), $svc);
+
+		if ((time() - $svcs['default']['last_update']) > 7) {
+			$servicequery= "UPDATE services SET lock = FALSE WHERE ds LIKE ('default')";
+		}
+
 		if ($svcs['default']['lock']!==true && (time() - $svcs['default']['last_update'])>5) {
 			$servicequery= "UPDATE services SET lock = TRUE WHERE ds LIKE ('default')";
 			$dbconn->query($servicequery);
@@ -39,6 +44,10 @@ while ($i<100) {
 			$last =time();
 			$servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('default')";
 			$dbconn->query($servicequery);
+		}
+
+		if ((time() - $svcs['fallback']['last_update']) > 7) {
+			$servicequery= "UPDATE services SET lock = FALSE WHERE ds LIKE ('fallback')";
 		}
 
 		if ($svcs['fallback']['lock']!==true && (time() - $svcs['fallback']['last_update'])>5) {
