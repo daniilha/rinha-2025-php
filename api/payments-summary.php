@@ -2,18 +2,14 @@
 
 require './connection.php';
 
-if (in_array('to',$_GET)) {
+if ($_GET!==null) {
 	$to = $_GET['to'];
-}
-else{
-	$to = null;
-}
-if (in_array('from',$_GET)) {
 	$from = $_GET['from'];
-}
-else{
+} else {
+	$to = null;
 	$from=null;
 }
+
 date_default_timezone_set('UTC');
 
 $dtto = date($to);

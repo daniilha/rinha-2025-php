@@ -100,7 +100,6 @@ while (true &&$i<1000) {
 				}
 			}
 
-
 			$mh = curl_multi_init();
 			$handles = [];
 			$updids = [];
@@ -135,7 +134,6 @@ while (true &&$i<1000) {
 						curl_multi_add_handle($mh, $ch);
 					}
 				}
-				
 
 				do {
 					$status = curl_multi_exec($mh, $activeCount);
@@ -173,9 +171,12 @@ while (true &&$i<1000) {
 			foreach ($all as $row) {
 				if (!in_array($row['correlationId'], $updids)) {
 					$handle = $ids[$row['correlationId']]['handle'];
-					$cresult = curl_multi_getcontent($handle);
-					$msg=json_decode($cresult, true);
-
+					if ($handle !== null) {
+						$cresult = curl_multi_getcontent($handle);
+						$msg=json_decode($cresult, true);
+					} else {
+						$msg['message'] = null;
+					}
 					if (!empty($msg['message'])) {
 						$processor = $ids[$row['correlationId']]['processor'];
 
