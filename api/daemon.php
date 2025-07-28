@@ -13,7 +13,7 @@ $host = gethostname();
 $daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
 $limit = 25;
-$timeout = 2000;
+$timeout = 5000;
 $default_url = getenv('PAYMENT_PROCESSOR_URL_DEFAULT');
 $fallback_url = getenv('PAYMENT_PROCESSOR_URL_FALLBACK');
 $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
@@ -171,12 +171,9 @@ while (true &&$i<1000) {
 			foreach ($all as $row) {
 				if (!in_array($row['correlationId'], $updids)) {
 					$handle = $ids[$row['correlationId']]['handle'];
-					if ($handle !== null) {
-						$cresult = curl_multi_getcontent($handle);
-						$msg=json_decode($cresult, true);
-					} else {
-						$msg['message'] = null;
-					}
+					$cresult = curl_multi_getcontent($handle);
+					$msg=json_decode($cresult, true);
+
 					if (!empty($msg['message'])) {
 						$processor = $ids[$row['correlationId']]['processor'];
 
