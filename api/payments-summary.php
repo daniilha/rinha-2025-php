@@ -1,11 +1,19 @@
 <?php
 
 require './connection.php';
-// echo'olá';
-// var_dump($_GET);
-$to = $_GET['to'];
-$from = $_GET['from'];
 
+if (in_array('to',$_GET)) {
+	$to = $_GET['to'];
+}
+else{
+	$to = null;
+}
+if (in_array('from',$_GET)) {
+	$from = $_GET['from'];
+}
+else{
+	$from=null;
+}
 date_default_timezone_set('UTC');
 
 $dtto = date($to);
@@ -13,8 +21,12 @@ $dtto = date($to);
 $dtfrom = date($from);
 
 $dbconn = Connection::connect();
-$query= "select COUNT(completed_payments.\"correlationId\") as total, SUM(amount) as amount, processor from completed_payments WHERE processor NOT LIKE 'unset' AND requested_at BETWEEN '{$from}' AND '{$to}'  GROUP BY processor";
+$query= "select COUNT(completed_payments.\"correlationId\") as total, SUM(amount) as amount, processor from completed_payments WHERE processor NOT LIKE 'unset'";
 // $result = pg_query($dbconn, $query);
+if (isset($to) && isset($from)) {
+	$query.=" AND requested_at BETWEEN '{$from}' AND '{$to}' ";
+}
+$query.='GROUP BY processor';
 
 $result = $dbconn->query($query);
 

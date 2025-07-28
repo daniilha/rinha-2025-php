@@ -13,7 +13,7 @@ $host = gethostname();
 $daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
 $limit = 25;
-$timeout = 1000;
+$timeout = 2000;
 $default_url = getenv('PAYMENT_PROCESSOR_URL_DEFAULT');
 $fallback_url = getenv('PAYMENT_PROCESSOR_URL_FALLBACK');
 $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
