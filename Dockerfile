@@ -25,4 +25,4 @@ ENV SCRIPT_FILENAME=/var/www/html/daemon.php
 
 ENV REQUEST_METHOD=GET
 
-CMD /usr/local/sbin/php-fpm -D -y /usr/local/etc/php-fpm.d/www.conf; sleep 1; while true; do bash -c "php health-check.php & disown; cgi-fcgi -bind -connect /sock/fpmsocket.sock"; done
+CMD /usr/local/sbin/php-fpm -D -y /usr/local/etc/php-fpm.d/www.conf; sleep 1; while true; do bash -c "cgi-fcgi -bind -connect /sock/fpmsocket.sock"; done

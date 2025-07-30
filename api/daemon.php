@@ -16,6 +16,9 @@ $limit = 25;
 $timeout = 5000;
 $default_url = getenv('PAYMENT_PROCESSOR_URL_DEFAULT');
 $fallback_url = getenv('PAYMENT_PROCESSOR_URL_FALLBACK');
+$default = null;
+$fallback = null;
+$last=0;
 $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = '{$host}'";
 $result = $dbconn->query($query);
 
@@ -54,11 +57,36 @@ while (true &&$i<10000) {
 			$result = $dbconn->query($query);
 		}
 	}
+	if ((time()-$last)>4) {
+		$ch = curl_init('http://rinha-nginx/default-health');
 
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
+		curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
+		$result = curl_exec($ch);
+		$res=json_decode($result, true);
+		$res['failing'] = $res['failing'] ? 1 : 0;
+		$last =time();
+		$servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('default')";
+		$dbconn->query($servicequery);
+
+		$ch = curl_init('http://rinha-nginx/fallback-health');
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
+		curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
+		$result = curl_exec($ch);
+		$res=json_decode($result, true);
+
+		$res['failing'] = $res['failing'] ? 1 : 0;
+		$last =time();
+		$servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('fallback')";
+		$dbconn->query($servicequery);
+	}
 	$servicequery = 'SELECT * FROM services';
 	$re = $dbconn->query($servicequery);
 	$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
 	$svcs = array_combine(array_column($svc, 'ds'), $svc);
+
 	if (isset($default)) {
 		if ($default['last_update'] < $svcs['default']['last_update']) {
 			$default = $svcs['default'];
