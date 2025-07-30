@@ -1,12 +1,17 @@
-FROM php:fpm
+FROM php:fpm-alpine
+
+RUN addgroup -g 101 -S nginx
+RUN adduser -u 101 -S -D -G nginx nginx
 
 WORKDIR /var/www/html
 
-RUN apt-get update && apt-get install -y libpq-dev fcgiwrap zlib1g-dev 
+RUN apk add libpq-dev fcgiwrap zlib-dev linux-headers bash ${PHPIZE_DEPS}
 
 RUN pecl install apcu
 
-RUN docker-php-ext-install pdo pdo_pgsql pgsql 
+RUN docker-php-ext-install pdo pdo_pgsql pgsql sockets
+
+#RUN CFLAGS="$CFLAGS -D_GNU_SOURCE" docker-php-ext-install 
 
 RUN docker-php-ext-enable apcu
 
@@ -20,4 +25,4 @@ ENV SCRIPT_FILENAME=/var/www/html/daemon.php
 
 ENV REQUEST_METHOD=GET
 
-CMD /usr/local/sbin/php-fpm -D; sleep 1; while true; do bash -c "php health-check.php & disown; cgi-fcgi -bind -connect localhost:9000;"; done
+CMD /usr/local/sbin/php-fpm -D -y /usr/local/etc/php-fpm.d/www.conf; sleep 1; while true; do bash -c "php health-check.php & disown; cgi-fcgi -bind -connect /sock/fpmsocket.sock"; done

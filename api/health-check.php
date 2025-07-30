@@ -13,7 +13,7 @@ $timeout = 10000;
 
 $i = 0;
 
-while ($i<100) {
+while ($i<10000) {
 	++$i;
 	$servicequery = 'SELECT * FROM services';
 	$re = $dbconn->query($servicequery);
@@ -32,7 +32,7 @@ while ($i<100) {
 			$servicequery= "UPDATE services SET lock = TRUE WHERE ds LIKE ('default')";
 			$dbconn->query($servicequery);
 
-			$ch = curl_init('http://payment-processor-default:8080/payments/service-health');
+			$ch = curl_init('http://rinha-nginx/default-health');
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
 			curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
@@ -54,7 +54,7 @@ while ($i<100) {
 			$servicequery= "UPDATE services SET lock = TRUE WHERE ds LIKE ('fallback')";
 			$dbconn->query($servicequery);
 
-			$ch = curl_init('http://payment-processor-fallback:8080/payments/service-health');
+			$ch = curl_init('http://rinha-nginx/fallback-health');
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
 			curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);

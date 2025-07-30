@@ -27,7 +27,7 @@ $updatequery = $dbconn->prepare("UPDATE payments SET processor = '{$host}', daem
 ORDER BY requested_at ASC 
 LIMIT {$limit} FOR UPDATE) AS pay WHERE payments.\"correlationId\" = pay.\"correlationId\"");
 
-while (true &&$i<1000) {
+while (true &&$i<10000) {
 	++$i;
 
 	$iterator = apcu_fetch('iterator');
@@ -104,37 +104,36 @@ while (true &&$i<1000) {
 			$handles = [];
 			$updids = [];
 
-			if ($default['failing']==0) {
-				foreach ($all as $row) {
-					if (!empty($row['correlationId'])) {
-						$ids[$row['correlationId']]['processor'] = 'default';
-						$ch = curl_init('http://payment-processor-default:8080/payments');
+			foreach ($all as $row) {
+				if (!empty($row['correlationId'])) {
+					$ids[$row['correlationId']]['processor'] = 'default';
+					$ch = curl_init('http://payment-processor-default:8080/payments');
 
+					$rq = DateTime::createFromFormat('U.u', microtime(true));
+
+					if ($rq ===false) {
 						$rq = DateTime::createFromFormat('U.u', microtime(true));
-
-						if ($rq ===false) {
-							$rq = DateTime::createFromFormat('U.u', microtime(true));
-						}
-
-						$rqd = $rq->format('Y-m-d\TH:i:s.u\Z');
-						$payload = ['correlationId'=>$row['correlationId'],'amount'=>$row['amount'],'requestedAt'=>$rqd];
-
-						$ids[$row['correlationId']]['payload']=$payload;
-						$ids[$row['correlationId']]['correlationId']=$row['correlationId'];
-						$payload=json_encode($payload);
-						$ctimeout = $default['rs_delay'] + $timeout;
-						curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-						curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $ctimeout);
-						curl_setopt($ch, CURLOPT_TIMEOUT_MS, $ctimeout);
-						$ids[$row['correlationId']]['handle']=$ch;
-
-						$handles[]= $ch;
-						curl_multi_add_handle($mh, $ch);
 					}
-				}
 
+					$rqd = $rq->format('Y-m-d\TH:i:s.u\Z');
+					$payload = ['correlationId'=>$row['correlationId'],'amount'=>$row['amount'],'requestedAt'=>$rqd];
+
+					$ids[$row['correlationId']]['payload']=$payload;
+					$ids[$row['correlationId']]['correlationId']=$row['correlationId'];
+					$payload=json_encode($payload);
+					$ctimeout = $default['rs_delay'] + $timeout;
+					curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+					curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $ctimeout);
+					curl_setopt($ch, CURLOPT_TIMEOUT_MS, $ctimeout);
+					$ids[$row['correlationId']]['handle']=$ch;
+
+					$handles[]= $ch;
+					curl_multi_add_handle($mh, $ch);
+				}
+			}
+			if ($default['failing']==0) {
 				do {
 					$status = curl_multi_exec($mh, $activeCount);
 					if ($status == CURLM_OK && $activeCount) {
