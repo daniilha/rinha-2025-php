@@ -1,4 +1,15 @@
 <?php
+
+ob_start();
+// do initial processing here
+echo '200'; // send the response
+header('Connection: close');
+header('Content-Length: ' . ob_get_length());
+ob_end_flush();
+@ob_flush();
+flush();
+fastcgi_finish_request();
+
 $input = file_get_contents('php://input');
 $payment  = json_decode($input, true);
 $pay = [];

@@ -12,8 +12,8 @@ try {
 $host = gethostname();
 $daemon =  random_int(1, 100) . '-' . uniqid();
 $i = 0;
-$limit = 25;
-$timeout = 5000;
+$limit = 500;
+$timeout = 3000;
 $default_url = getenv('PAYMENT_PROCESSOR_URL_DEFAULT');
 $fallback_url = getenv('PAYMENT_PROCESSOR_URL_FALLBACK');
 $default = null;
@@ -23,12 +23,12 @@ $query= "UPDATE payments SET  operation = 'incoming' WHERE payments.processor = 
 $result = $dbconn->query($query);
 
 $selectquery = $dbconn->prepare("select payments.\"correlationId\" as \"correlationId\", amount,requested_at, processor, operation 
-from payments where operation like 'busy' AND daemon = '{$daemon}' 
-LIMIT {$limit}");
+from payments where operation like 'busy' AND daemon = :daemon 
+LIMIT :limit");
 
-$updatequery = $dbconn->prepare("UPDATE payments SET processor = '{$host}', daemon = '{$daemon}', operation = 'busy'  FROM (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
+$updatequery = $dbconn->prepare("UPDATE payments SET processor = :host, daemon = :daemon, operation = 'busy'  FROM (select payments.\"correlationId\" as \"correlationId\"	from payments where operation like 'incoming'  
 ORDER BY requested_at ASC 
-LIMIT {$limit} FOR UPDATE) AS pay WHERE payments.\"correlationId\" = pay.\"correlationId\"");
+LIMIT :limits FOR UPDATE) AS pay WHERE payments.\"correlationId\" = pay.\"correlationId\"");
 
 while (true &&$i<10000) {
 	++$i;
@@ -57,70 +57,78 @@ while (true &&$i<10000) {
 			$result = $dbconn->query($query);
 		}
 	}
-	if ((time()-$last)>4) {
-		$ch = curl_init('http://rinha-nginx/default-health');
 
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
-		curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
-		$result = curl_exec($ch);
-		$res=json_decode($result, true);
-		$res['failing'] = $res['failing'] ? 1 : 0;
-		$last =time();
-		$servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('default')";
-		$dbconn->query($servicequery);
+	// $servicequery = 'SELECT * FROM services';
+	// $re = $dbconn->query($servicequery);
+	// $svc = $re->fetchAll(\PDO::FETCH_ASSOC);
+	// $svcs = array_combine(array_column($svc, 'ds'), $svc);
 
-		$ch = curl_init('http://rinha-nginx/fallback-health');
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
-		curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
-		$result = curl_exec($ch);
-		$res=json_decode($result, true);
+	// if (isset($default)) {
+	// 	if ($default['last_update'] < $svcs['default']['last_update']) {
+	// 		$default = $svcs['default'];
+	// 	}
+	// } else {
+	// 	$default = $svcs['default'];
+	// }
 
-		$res['failing'] = $res['failing'] ? 1 : 0;
-		$last =time();
-		$servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('fallback')";
-		$dbconn->query($servicequery);
-	}
-	$servicequery = 'SELECT * FROM services';
-	$re = $dbconn->query($servicequery);
-	$svc = $re->fetchAll(\PDO::FETCH_ASSOC);
-	$svcs = array_combine(array_column($svc, 'ds'), $svc);
+	// if (isset($fallback)) {
+	// 	if ($fallback['last_update'] < $svcs['fallback']['last_update']) {
+	// 		$fallback = $svcs['fallback'];
+	// 	}
+	// } else {
+	// 	$fallback = $svcs['fallback'];
+	// }
 
-	if (isset($default)) {
-		if ($default['last_update'] < $svcs['default']['last_update']) {
-			$default = $svcs['default'];
-		}
-	} else {
-		$default = $svcs['default'];
-	}
-
-	if (isset($fallback)) {
-		if ($fallback['last_update'] < $svcs['fallback']['last_update']) {
-			$fallback = $svcs['fallback'];
-		}
-	} else {
-		$fallback = $svcs['fallback'];
-	}
-
-	if ($default['failing']==1&&$fallback['failing']==1) {
-		$servicequery = 'UPDATE services SET failing = 1';
-		$re = $dbconn->query($servicequery);
-		// sleep(1);
-		die;
-	}
-
-	$result = $selectquery->execute();
+	$result = $selectquery->execute([':daemon'=>$daemon,':limit'=>$limit]);
 	if ($result) {
 		$all = $selectquery->fetchAll(\PDO::FETCH_ASSOC);
 
 		$n = count($all);
 
 		if ($n < $limit) {
-			$result = $updatequery->execute();
+			$result = $updatequery->execute([':daemon'=>$daemon,':host'=>$host,':limits'=>$limit]);
 		}
 
 		if (!empty($all[0])) {
+			if ((time()-$last)>4) {
+				$ch = curl_init('http://rinha-nginx/default-health');
+
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
+				curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
+				$result = curl_exec($ch);
+				$res=json_decode($result, true);
+				$res['failing'] = $res['failing'] ? 1 : 0;
+				$res['rs_delay'] = isset($res['rs_delay']) ? $res['rs_delay'] : 0;
+
+				// $last =time();
+				$default = $res;
+				// $servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('default')";
+				// $dbconn->query($servicequery);
+
+				$ch = curl_init('http://rinha-nginx/fallback-health');
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $timeout);
+				curl_setopt($ch, CURLOPT_TIMEOUT_MS, $timeout);
+				$result = curl_exec($ch);
+				$res=json_decode($result, true);
+
+				$res['failing'] = $res['failing'] ? 1 : 0;
+				$res['rs_delay'] = isset($res['rs_delay']) ? $res['rs_delay'] : 0;
+
+				$fallback = $res;
+				$last =time();
+				// $servicequery= "UPDATE services SET lock = FALSE , failing ={$res['failing']}, rs_delay = {$res['minResponseTime']}, last_update = {$last} WHERE ds LIKE ('fallback')";
+				// $dbconn->query($servicequery);
+			}
+
+			if ($default['failing']==1&&$fallback['failing']==1) {
+				// $servicequery = 'UPDATE services SET failing = 1';
+				// $re = $dbconn->query($servicequery);
+				sleep(2);
+				die;
+			}
+
 			$ids = [];
 			foreach ($all as $row) {
 				if (!empty($row['correlationId'])) {
@@ -131,17 +139,11 @@ while (true &&$i<10000) {
 			$mh = curl_multi_init();
 			$handles = [];
 			$updids = [];
-
 			foreach ($all as $row) {
 				if (!empty($row['correlationId'])) {
 					$ids[$row['correlationId']]['processor'] = 'default';
 					$ch = curl_init('http://payment-processor-default:8080/payments');
-
-					$rq = DateTime::createFromFormat('U.u', microtime(true));
-
-					if ($rq ===false) {
-						$rq = DateTime::createFromFormat('U.u', microtime(true));
-					}
+					$rq = DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''));
 
 					$rqd = $rq->format('Y-m-d\TH:i:s.u\Z');
 					$payload = ['correlationId'=>$row['correlationId'],'amount'=>$row['amount'],'requestedAt'=>$rqd];
@@ -217,8 +219,8 @@ while (true &&$i<10000) {
 						$ids[$row['correlationId']]['processor'] = 'fallback';
 						$ch = curl_init('http://payment-processor-fallback:8080/payments');
 
-						$rq = DateTime::createFromFormat('U.u', microtime(true));
-						$rqd = $rq->format('Y-m-d\TH:i:s.u\Z');
+						$rq = DateTime::createFromFormat('U.u', number_format(microtime(true), 6, '.', ''));
+
 						$payload = ['correlationId'=>$row['correlationId'],'amount'=>$row['amount'],'requestedAt'=>$rqd];
 						$ids[$row['correlationId']]['payload']=$payload;
 						$payload=json_encode($payload);
